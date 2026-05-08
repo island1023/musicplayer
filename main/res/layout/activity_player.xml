@@ -186,7 +186,7 @@
                 android:layout_width="35dp"
                 android:layout_height="35dp"
                 android:padding="6dp"
-                android:src="@android:drawable/ic_menu_always_invoke_with_sound"
+                android:src="@android:drawable/ic_menu_rotate"
                 app:tint="#FFFFFF" />
 
             <Space android:layout_width="30dp" android:layout_height="wrap_content" />
