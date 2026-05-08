@@ -7,15 +7,27 @@ import retrofit2.http.Query;
 
 public interface PlayerApiService {
 
-    // 1. 获取歌曲详情 (包含海报 al.picUrl, 歌手 ar, 歌名)
+    // 获取歌曲详情 (包含海报 al.picUrl)
     @GET("/song/detail")
     Call<ResponseBody> getSongDetail(@Query("ids") String ids);
 
-    // 2. 获取音乐真实播放链接
+    // 获取音乐真实播放链接
     @GET("/song/url/v1")
     Call<ResponseBody> getSongUrl(@Query("id") String id, @Query("level") String level);
 
-    // 3. 获取逐字歌词
+    // 获取逐字歌词
     @GET("/lyric/new")
     Call<ResponseBody> getLyricNew(@Query("id") String id);
+
+    // 🌟 喜欢/取消喜欢歌曲
+    @GET("/song/like")
+    Call<ResponseBody> toggleLike(
+            @Query("id") String id,
+            @Query("uid") String uid,
+            @Query("like") boolean like
+    );
+
+    // 获取歌曲红心用户数量
+    @GET("/song/red/count")
+    Call<ResponseBody> getRedCount(@Query("id") String id);
 }
