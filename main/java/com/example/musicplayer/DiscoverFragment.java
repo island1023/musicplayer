@@ -50,7 +50,7 @@ public class DiscoverFragment extends Fragment {
 
     private void initRetrofit() {
         apiService = new Retrofit.Builder()
-                .baseUrl("http://你的IP:3000/") // TODO: 记得换成你的IP
+                .baseUrl("http://10.0.2.2:3000/") // TODO: 记得换成你的IP
                 .addConverterFactory(GsonConverterFactory.create())
                 .build().create(DiscoverApiService.class);
     }

@@ -61,7 +61,7 @@ public class CaptchaVerifyActivity extends AppCompatActivity {
 
     private void initRetrofit() {
         Retrofit retrofit = new Retrofit.Builder()
-                .baseUrl("http://你的IP地址:3000/") // TODO: 替换为实际地址
+                .baseUrl("http://10.0.2.2:3000/") // TODO: 替换为实际地址
                 .addConverterFactory(GsonConverterFactory.create())
                 .build();
         apiService = retrofit.create(AuthApiService.class);
@@ -75,7 +75,7 @@ public class CaptchaVerifyActivity extends AppCompatActivity {
 
             @Override
             public void onTextChanged(CharSequence s, int start, int before, int count) {
-                if (s.length() >= 6) {
+                if (s.length() >= 4) {
                     btnVerifyLogin.setEnabled(true);
                     btnVerifyLogin.setBackgroundTintList(android.content.res.ColorStateList.valueOf(Color.RED));
                 } else {

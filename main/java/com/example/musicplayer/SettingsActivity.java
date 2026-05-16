@@ -41,7 +41,7 @@ public class SettingsActivity extends AppCompatActivity {
 
     private void initRetrofit() {
         apiService = new Retrofit.Builder()
-                .baseUrl("http://你的IP地址:3000/") // 请替换为实际的 IP
+                .baseUrl("http://10.0.2.2:3000/") // 请替换为实际的 IP
                 .addConverterFactory(GsonConverterFactory.create())
                 .build()
                 .create(SettingApiService.class);

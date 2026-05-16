@@ -57,7 +57,7 @@ public class PasswordInputActivity extends AppCompatActivity {
 
     private void initRetrofit() {
         Retrofit retrofit = new Retrofit.Builder()
-                .baseUrl("http://你的IP地址:3000/") // 请替换为你的实际后端地址
+                .baseUrl("http://10.0.2.2:3000/") // 请替换为你的实际后端地址
                 .addConverterFactory(GsonConverterFactory.create())
                 .build();
         apiService = retrofit.create(AuthApiService.class);

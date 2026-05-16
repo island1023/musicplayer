@@ -77,7 +77,7 @@ public class PlayerActivity extends AppCompatActivity {
 
     private void initRetrofit() {
         apiService = new Retrofit.Builder()
-                .baseUrl("http://你的IP地址:3000/")
+                .baseUrl("http://10.0.2.2:3000/")
                 .addConverterFactory(GsonConverterFactory.create())
                 .build()
                 .create(PlayerApiService.class);

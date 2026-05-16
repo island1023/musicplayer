@@ -96,7 +96,7 @@ public class HomeFragment extends Fragment {
 
     private void initRetrofit() {
         Retrofit retrofit = new Retrofit.Builder()
-                .baseUrl("http://你的IP地址:3000/") // TODO: 替换为实际后端IP
+                .baseUrl("http://10.0.2.2:3000/") // TODO: 替换为实际后端IP
                 .addConverterFactory(GsonConverterFactory.create())
                 .build();
         apiService = retrofit.create(HomeApiService.class);

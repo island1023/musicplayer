@@ -14,8 +14,17 @@
         app:tabIndicatorColor="#FF0000"
         app:tabSelectedTextColor="#FFFFFF"
         app:tabTextColor="#888888">
-        <com.google.android.material.tabs.TabItem android:text="MV排行" />
-        <com.google.android.material.tabs.TabItem android:text="推荐视频" />
+
+        <com.google.android.material.tabs.TabItem
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="MV排行" />
+
+        <com.google.android.material.tabs.TabItem
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="推荐视频" />
+
     </com.google.android.material.tabs.TabLayout>
 
     <HorizontalScrollView
@@ -24,7 +33,12 @@
         android:layout_height="wrap_content"
         android:padding="8dp"
         android:scrollbars="none">
-        <LinearLayout android:id="@+id/ll_area_container" android:orientation="horizontal" />
+
+        <LinearLayout
+            android:id="@+id/ll_area_container"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal" />
     </HorizontalScrollView>
 
     <androidx.recyclerview.widget.RecyclerView

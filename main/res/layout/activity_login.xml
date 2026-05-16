@@ -67,4 +67,14 @@
         android:backgroundTint="#CCCCCC"
         android:enabled="false" />
 
+    <Button
+        android:id="@+id/btn_login_qr"
+        android:layout_width="match_parent"
+        android:layout_height="50dp"
+        android:layout_marginTop="16dp"
+        android:text="二维码登录"
+        android:textColor="#FFFFFF"
+        android:backgroundTint="#FF0000"
+        android:textStyle="bold" />
+
 </LinearLayout>

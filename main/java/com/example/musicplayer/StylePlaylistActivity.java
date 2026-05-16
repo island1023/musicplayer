@@ -57,7 +57,7 @@ public class StylePlaylistActivity extends AppCompatActivity {
 
     private void initRetrofit() {
         apiService = new Retrofit.Builder()
-                .baseUrl("http://你的IP:3000/")
+                .baseUrl("http://10.0.2.2:3000/")
                 .addConverterFactory(GsonConverterFactory.create())
                 .build().create(DiscoverApiService.class);
     }

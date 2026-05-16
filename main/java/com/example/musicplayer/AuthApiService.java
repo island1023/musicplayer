@@ -6,6 +6,20 @@ import retrofit2.http.POST;
 import retrofit2.http.Query;
 
 public interface AuthApiService {
+    @GET("/login/status")
+    Call<ResponseBody> getLoginStatus();
+
+    // 1. 获取二维码 Key
+    @GET("/login/qr/key")
+    Call<ResponseBody> getQrKey();
+
+    // 2. 生成二维码（qrimg=true 返回 Base64 图片数据）
+    @GET("/login/qr/create")
+    Call<ResponseBody> createQr(@Query("key") String key, @Query("qrimg") boolean qrimg);
+
+    // 3. 检查扫码状态 (800 为二维码过期, 801 为等待扫码, 802 为待确认, 803 为授权登录成功)
+    @GET("/login/qr/check")
+    Call<ResponseBody> checkQrStatus(@Query("key") String key);
 
     // 1. 发送验证码
     @GET("/captcha/sent")

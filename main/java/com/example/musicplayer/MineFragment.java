@@ -1,9 +1,13 @@
 package com.example.musicplayer;
 
+import android.app.AlertDialog;
+import android.content.Intent;
+import android.graphics.Color;
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
@@ -16,6 +20,7 @@ import androidx.fragment.app.Fragment;
 import com.bumptech.glide.Glide;
 import com.google.android.material.tabs.TabLayout;
 
+import org.json.JSONArray;
 import org.json.JSONObject;
 
 import okhttp3.ResponseBody;
@@ -32,29 +37,25 @@ public class MineFragment extends Fragment {
     private TabLayout tabLayout;
     private LinearLayout layoutMusic, layoutPodcast, layoutNotes;
 
-    private UserApiService apiService;
     private String currentUid;
+    private UserApiService apiService;
 
     @Nullable
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.fragment_mine, container, false);
-
-        // 1. 从本地记事本中读取真实保存的 UID
         currentUid = SpUtils.getUserId(requireContext());
-
         initViews(view);
         initRetrofit();
+        setupListeners(view);
         setupTabs();
-
-        // 2. 如果 UID 不为空，说明已登录，拉取网络数据
-        if (!currentUid.isEmpty()) {
-            fetchUserInfo();
-        } else {
-            tvNickname.setText("未登录");
-        }
-
         return view;
+    }
+
+    @Override
+    public void onResume() {
+        super.onResume();
+        if (!currentUid.isEmpty()) fetchUserInfo();
     }
 
     private void initViews(View view) {
@@ -71,11 +72,30 @@ public class MineFragment extends Fragment {
     }
 
     private void initRetrofit() {
-        Retrofit retrofit = new Retrofit.Builder()
-                .baseUrl("http://你的IP地址:3000/") // 替换为你的服务器地址
-                .addConverterFactory(GsonConverterFactory.create())
-                .build();
-        apiService = retrofit.create(UserApiService.class);
+        apiService = new Retrofit.Builder().baseUrl("http://10.0.2.2:3000/")
+                .addConverterFactory(GsonConverterFactory.create()).build().create(UserApiService.class);
+    }
+
+    private void setupListeners(View view) {
+        View.OnClickListener profileClickListener = v -> startActivity(new Intent(getActivity(), ProfileActivity.class));
+        ivAvatar.setOnClickListener(profileClickListener);
+        tvNickname.setOnClickListener(profileClickListener);
+
+        view.findViewById(R.id.ll_social_stats).setOnClickListener(v -> {
+            Intent intent = new Intent(getActivity(), SocialActivity.class);
+            intent.putExtra("uid", currentUid);
+            startActivity(intent);
+        });
+
+        view.findViewById(R.id.btn_recent).setOnClickListener(v -> startActivity(new Intent(getActivity(), RecentActivity.class)));
+        view.findViewById(R.id.btn_local).setOnClickListener(v -> startActivity(new Intent(getActivity(), ImportLocalActivity.class)));
+
+        view.findViewById(R.id.tv_liked_songs).setOnClickListener(v -> {
+            Intent intent = new Intent(getActivity(), LikedSongsActivity.class);
+            intent.putExtra("uid", currentUid);
+            startActivity(intent);
+        });
+        view.findViewById(R.id.tv_import_local).setOnClickListener(v -> startActivity(new Intent(getActivity(), ImportLocalActivity.class)));
     }
 
     private void setupTabs() {
@@ -86,16 +106,17 @@ public class MineFragment extends Fragment {
                 layoutPodcast.setVisibility(View.GONE);
                 layoutNotes.setVisibility(View.GONE);
 
-                switch (tab.getPosition()) {
-                    case 0: layoutMusic.setVisibility(View.VISIBLE); break;
-                    case 1: layoutPodcast.setVisibility(View.VISIBLE); break;
-                    case 2: layoutNotes.setVisibility(View.VISIBLE); break;
+                if (tab.getPosition() == 0) layoutMusic.setVisibility(View.VISIBLE);
+                else if (tab.getPosition() == 1) {
+                    layoutPodcast.setVisibility(View.VISIBLE);
+                    fetchUserDj(); // 拉取播客真实数据
+                } else if (tab.getPosition() == 2) {
+                    layoutNotes.setVisibility(View.VISIBLE);
+                    fetchUserEvent(); // 拉取笔记真实数据
                 }
             }
-            @Override
-            public void onTabUnselected(TabLayout.Tab tab) {}
-            @Override
-            public void onTabReselected(TabLayout.Tab tab) {}
+            @Override public void onTabUnselected(TabLayout.Tab tab) {}
+            @Override public void onTabReselected(TabLayout.Tab tab) {}
         });
     }
 
@@ -103,46 +124,125 @@ public class MineFragment extends Fragment {
         apiService.getUserDetail(currentUid).enqueue(new Callback<ResponseBody>() {
             @Override
             public void onResponse(Call<ResponseBody> call, Response<ResponseBody> response) {
-                if (response.isSuccessful() && response.body() != null) {
+                if (response.isSuccessful() && response.body() != null && isAdded()) {
                     try {
-                        String jsonString = response.body().string();
-                        JSONObject jsonObject = new JSONObject(jsonString);
-
-                        // 提取网易云返回的数据
+                        JSONObject jsonObject = new JSONObject(response.body().string());
                         int level = jsonObject.optInt("level", 0);
                         JSONObject profile = jsonObject.getJSONObject("profile");
-                        String nickname = profile.optString("nickname", "未知名单");
-                        String avatarUrl = profile.optString("avatarUrl", "");
-                        int follows = profile.optInt("follows", 0);
-                        int fans = profile.optInt("followeds", 0);
 
-                        // 更新到 UI
-                        tvNickname.setText(nickname);
-                        tvLevel.setText("Lv." + level);
-                        tvFollows.setText(follows + " 关注");
-                        tvFans.setText(fans + " 粉丝");
+                        String avatarUrl = profile.optString("avatarUrl");
 
-                        // 使用 Glide 渲染圆形头像
-                        if (!avatarUrl.isEmpty() && isAdded()) {
-                            Glide.with(requireContext())
-                                    .load(avatarUrl)
-                                    .circleCrop()
-                                    .into(ivAvatar);
-                        }
+                        requireActivity().runOnUiThread(() -> {
+                            tvNickname.setText(profile.optString("nickname"));
+                            tvLevel.setText("Lv." + level);
+                            tvFollows.setText(profile.optInt("follows") + " 关注");
+                            tvFans.setText(profile.optInt("followeds") + " 粉丝");
 
-                    } catch (Exception e) {
-                        e.printStackTrace();
-                        Toast.makeText(getContext(), "数据解析异常", Toast.LENGTH_SHORT).show();
-                    }
-                } else {
-                    Toast.makeText(getContext(), "获取用户信息失败", Toast.LENGTH_SHORT).show();
+                            // 🌟 修复头像加载逻辑：强制指定上下文，加载错误时保持 logo
+                            if (!avatarUrl.isEmpty()) {
+                                Glide.with(requireContext()).load(avatarUrl).placeholder(R.drawable.ic_logo).circleCrop().into(ivAvatar);
+                            }
+                        });
+                    } catch (Exception e) { e.printStackTrace(); }
                 }
             }
+            @Override public void onFailure(Call<ResponseBody> call, Throwable t) {}
+        });
+    }
 
+
+
+    private void showCreatePlaylistDialog() {
+        String[] types = {"普通歌单", "共享歌单", "隐私歌单"};
+        final String[] selectedType = {"NORMAL"};
+        final String[] isPrivacy = {""};
+
+        new AlertDialog.Builder(getContext())
+                .setTitle("选择歌单类别")
+                .setSingleChoiceItems(types, 0, (dialog, which) -> {
+                    if (which == 1) selectedType[0] = "SHARED";
+                    else if (which == 2) isPrivacy[0] = "10";
+                    else selectedType[0] = "NORMAL";
+                })
+                .setPositiveButton("下一步", (dialog, which) -> {
+                    // 弹出名称输入框
+                    EditText et = new EditText(getContext());
+                    new AlertDialog.Builder(getContext()).setTitle("输入歌单名称").setView(et)
+                            .setPositiveButton("创建", (d, w) -> {
+                                String name = et.getText().toString();
+                                apiService.createPlaylist(name, isPrivacy[0], selectedType[0]).enqueue(new Callback<ResponseBody>() {
+                                    @Override
+                                    public void onResponse(Call<ResponseBody> call, Response<ResponseBody> response) {
+                                        try {
+                                            JSONObject res = new JSONObject(response.body().string());
+                                            String pid = res.optJSONObject("playlist").optString("id");
+                                            // 创建成功，跳转到歌曲添加页面
+                                            Intent intent = new Intent(getActivity(), AddSongsActivity.class);
+                                            intent.putExtra("pid", pid);
+                                            startActivity(intent);
+                                        } catch (Exception e) { e.printStackTrace(); }
+                                    }
+                                    @Override public void onFailure(Call<ResponseBody> call, Throwable t) {}
+                                });
+                            }).show();
+                }).show();
+    }
+
+    // 动态生成真实的播客界面
+    private void fetchUserDj() {
+        apiService.getUserDj(currentUid).enqueue(new Callback<ResponseBody>() {
             @Override
-            public void onFailure(Call<ResponseBody> call, Throwable t) {
-                Toast.makeText(getContext(), "网络异常", Toast.LENGTH_SHORT).show();
+            public void onResponse(Call<ResponseBody> call, Response<ResponseBody> response) {
+                try {
+                    layoutPodcast.removeAllViews(); // 清空旧数据
+                    JSONObject json = new JSONObject(response.body().string());
+                    JSONArray djs = json.optJSONArray("djRadios"); // 修正解析字段为 djRadios (网易云返回格式)
+
+                    if (djs == null || djs.length() == 0) {
+                        TextView tv = new TextView(getContext());
+                        tv.setText("暂无播客"); tv.setTextColor(Color.WHITE); tv.setPadding(0,40,0,0);
+                        layoutPodcast.addView(tv);
+                        return;
+                    }
+                    for (int i = 0; i < djs.length(); i++) {
+                        TextView tv = new TextView(getContext());
+                        tv.setText("🎧 " + djs.getJSONObject(i).getString("name"));
+                        tv.setTextColor(Color.WHITE); tv.setPadding(0, 30, 0, 30);
+                        layoutPodcast.addView(tv);
+                    }
+                } catch (Exception e) { e.printStackTrace(); }
             }
+            @Override public void onFailure(Call<ResponseBody> call, Throwable t) {}
+        });
+    }
+
+    // 动态生成真实的动态/笔记界面
+    private void fetchUserEvent() {
+        apiService.getUserEvent(currentUid, 30, -1).enqueue(new Callback<ResponseBody>() {
+            @Override
+            public void onResponse(Call<ResponseBody> call, Response<ResponseBody> response) {
+                try {
+                    layoutNotes.removeAllViews();
+                    JSONObject json = new JSONObject(response.body().string());
+                    JSONArray events = json.optJSONArray("events");
+
+                    if (events == null || events.length() == 0) {
+                        TextView tv = new TextView(getContext());
+                        tv.setText("暂无动态笔记"); tv.setTextColor(Color.WHITE); tv.setPadding(0,40,0,0);
+                        layoutNotes.addView(tv);
+                        return;
+                    }
+                    for (int i = 0; i < events.length(); i++) {
+                        JSONObject event = events.getJSONObject(i);
+                        JSONObject msgJson = new JSONObject(event.getString("json")); // 动态内容嵌套在一个叫 json 的字符串里
+                        TextView tv = new TextView(getContext());
+                        tv.setText("📝 " + msgJson.optString("msg", "分享了内容"));
+                        tv.setTextColor(Color.WHITE); tv.setPadding(0, 30, 0, 30);
+                        layoutNotes.addView(tv);
+                    }
+                } catch (Exception e) { e.printStackTrace(); }
+            }
+            @Override public void onFailure(Call<ResponseBody> call, Throwable t) {}
         });
     }
 }

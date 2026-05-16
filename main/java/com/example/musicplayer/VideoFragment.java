@@ -104,7 +104,7 @@ public class VideoFragment extends Fragment {
 
     private void initRetrofit() {
         apiService = new Retrofit.Builder()
-                .baseUrl("http://你的IP地址:3000/") // TODO: 请确保替换为你的实际后端IP
+                .baseUrl("http://10.0.2.2:3000/") // TODO: 请确保替换为你的实际后端IP
                 .addConverterFactory(GsonConverterFactory.create())
                 .build()
                 .create(VideoApiService.class);
